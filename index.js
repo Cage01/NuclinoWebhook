@@ -294,7 +294,7 @@ async function startWatching(){
             }
             const desc = (createdDesc.length > 0 ? createdDesc + (updatedDesc.length > 0 ? " - " : "") + updatedDesc: updatedDesc)
 
-            //Creating the
+            //Creating the JSON object to notify the Discord webhook, will create an embed with users name, avatar and a list of fields that contain all the info of the pages modified
             const notif = buildNotification(desc, user.firstName, user.avatarUrl, workspace.name, workspaceURL, fields);
             console.log("Sending: \n" + JSON.stringify(notif))
             notify(notif);
