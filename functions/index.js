@@ -247,8 +247,6 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
         fields = []
         for (const [userID, typeSet] of userMap.entries()) {
             const user = await fetchUser(userID);
-            //Short snippet of the content on that page up to 150 characters.
-            const infoString = (typeof item.content != 'undefined') ? item.content.substring(0, 150).replaceAll('\n', '') + "..." : "";
 
             if (typeof typeSet.created !== 'undefined') {
                 for (itemID of typeSet.created) {
@@ -259,6 +257,8 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
                     else
                         item = await fetchItem(itemID);
 
+                    //Short snippet of the content on that page up to 150 characters.
+                    const infoString = (typeof item.content != 'undefined') ? item.content.substring(0, 150).replaceAll('\n', '') + "..." : "";
                     //This field will provide the name of the page or item modified, along with a [read more] url to the page, a snippet and the modify type
                     if (item != null)
                         fields.push(buildField("(Created)", item.title, item.url, infoString));
@@ -275,6 +275,8 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
                     else
                         item = await fetchItem(itemID);
 
+                    //Short snippet of the content on that page up to 150 characters.    
+                    const infoString = (typeof item.content != 'undefined') ? item.content.substring(0, 150).replaceAll('\n', '') + "..." : "";
                     //This field will provide the name of the page or item modified, along with a [read more] url to the page, a snippet and the modify type
                     if (item != null)
                         fields.push(buildField("(Updated)", item.title, item.url, infoString));
