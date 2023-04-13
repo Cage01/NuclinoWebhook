@@ -1,19 +1,10 @@
 const functions = require("firebase-functions");
-
-// // Create and deploy your first functions
-// // https://firebase.google.com/docs/functions/get-started
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
 const fetch = require('node-fetch');
 const fs = require('fs');
 require('dotenv').config();
 
 var discovered_items = new Map();
-const watch_window = 15;
+const watch_window = 45;
 
 function minutesAgo(input) {
     const date = (input instanceof Date) ? input : new Date(input);
@@ -153,7 +144,7 @@ function buildNotification(infoString, authorName, iconURL, workspaceTitle, work
 function buildField(changeType, name, pageURL, contentSubstring) {
     return {
         name: name + " " + changeType,
-        value: contentSubstring + "\n**[\[read more\]](" + pageURL + ")**"
+        value: contentSubstring + "...\n**[\[read more\]](" + pageURL + ")**"
     }
 }
 
@@ -286,11 +277,11 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
             const workspaceURL = process.env.TEAM_URL + workspace.name.replaceAll(' ', '-');
             var createdDesc = "";
             if (typeof typeSet.created !== 'undefined' && typeSet.created.size > 0) {
-                createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : "page") + " created";
+                createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : " page") + " created";
             }
             var updatedDesc = "";
-            if (typeof typeSet.updated !== 'undefined' && typeSet.created.updated > 0) {
-                updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : "page") + " updated";
+            if (typeof typeSet.updated !== 'undefined' && typeSet.updated.size > 0) {
+                updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : " page") + " updated";
             }
 
             const desc = (createdDesc.length > 0 ? createdDesc + (updatedDesc.length > 0 ? " - " : "") + updatedDesc: updatedDesc)

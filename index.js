@@ -277,11 +277,11 @@ async function startWatching() {
             
             var createdDesc = "";
             if (typeof typeSet.created !== 'undefined' && typeSet.created.size > 0) {
-                createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : "page") + " created";
+                createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : " page") + " created";
             }
             var updatedDesc = "";
-            if (typeof typeSet.updated !== 'undefined' && typeSet.created.updated > 0) {
-                updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : "page") + " updated";
+            if (typeof typeSet.updated !== 'undefined' && typeSet.updated.size > 0) {
+                updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : " page") + " updated";
             }
 
             const desc = (createdDesc.length > 0 ? createdDesc + (updatedDesc.length > 0 ? " - " : "") + updatedDesc: updatedDesc)
