@@ -6,6 +6,7 @@ require('dotenv').config();
 var discovered_items = new Map();
 const watch_window = 45;
 
+//Subtracks the input from the current time to get how long ago something occurred in minutes
 function minutesAgo(input) {
     const date = (input instanceof Date) ? input : new Date(input);
     const secondsElapsed = (date.getTime() - Date.now()) / 1000;
@@ -14,10 +15,21 @@ function minutesAgo(input) {
     return Math.abs(Math.round(delta));
 }
 
+//Combines any iteralbles into a single set
+function concatSets(set, ...iterables) {
+    for (const iterable of iterables) {
+        for (const item of iterable) {
+            set.add(item);
+        }
+    }
+}
+
+//Builds the API endpoint url
 function getURL(endpoint) {
     return process.env.API_BASE_URL + process.env.API_VERSION + endpoint;
 }
 
+//Getter function for handling headers. This only contains the API_KEY for nuclino currently, and is located in the .env file
 function getHeaders() {
     return {
         Authorization: process.env.API_KEY
@@ -80,14 +92,7 @@ async function fetchItem(ID) {
     return json.data;
 }
 
-function concatSets(set, ...iterables) {
-    for (const iterable of iterables) {
-        for (const item of iterable) {
-            set.add(item);
-        }
-    }
-}
-
+//Traverse the page tree
 async function searchCollection(setIDs) {
 
     var curr = new Set();
@@ -108,21 +113,6 @@ async function searchCollection(setIDs) {
     return setIDs;
 }
 
-function notify(body) {
-    fetch(process.env.WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    })
-        .then((resp) => {
-            if (resp.ok) {
-                console.log('Sent notification')
-            } else {
-                console.error(resp);
-            }
-        })
-}
-
 function buildNotification(infoString, authorName, iconURL, workspaceTitle, workspaceURL, fieldArr) {
     return {
         embeds: [{
@@ -140,7 +130,6 @@ function buildNotification(infoString, authorName, iconURL, workspaceTitle, work
     }
 }
 
-
 function buildField(changeType, name, pageURL, contentSubstring) {
     return {
         name: name + " " + changeType,
@@ -148,6 +137,20 @@ function buildField(changeType, name, pageURL, contentSubstring) {
     }
 }
 
+function notify(body) {
+    fetch(process.env.WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+        .then((resp) => {
+            if (resp.ok) {
+                console.log('Sent notification')
+            } else {
+                console.error(resp);
+            }
+        })
+}
 
 exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes").onRun(async () => {
     //Will return the first ID that it finds, this works for now
@@ -244,6 +247,8 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
         fields = []
         for (const [userID, typeSet] of userMap.entries()) {
             const user = await fetchUser(userID);
+            //Short snippet of the content on that page up to 150 characters.
+            const infoString = (typeof item.content != 'undefined') ? item.content.substring(0, 150).replaceAll('\n', '') + "..." : "";
 
             if (typeof typeSet.created !== 'undefined') {
                 for (itemID of typeSet.created) {
@@ -254,8 +259,9 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
                     else
                         item = await fetchItem(itemID);
 
-                    const infoString = (typeof item.content != 'undefined') ? item.content.substring(0, 150).replaceAll('\n', '') + "..." : "";
-                    fields.push(buildField("Created", item.title, item.url, infoString));
+                    //This field will provide the name of the page or item modified, along with a [read more] url to the page, a snippet and the modify type
+                    if (item != null)
+                        fields.push(buildField("(Created)", item.title, item.url, infoString));
 
                 }
             }
@@ -269,12 +275,16 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
                     else
                         item = await fetchItem(itemID);
 
+                    //This field will provide the name of the page or item modified, along with a [read more] url to the page, a snippet and the modify type
                     if (item != null)
-                        fields.push(buildField("Updated", item.title, item.url, item.content.substring(0, 150)));
+                        fields.push(buildField("(Updated)", item.title, item.url, infoString));
                 }
             }
 
+            //Provides a link for the Discord embed to be clicked on to take you to the workspace
             const workspaceURL = process.env.TEAM_URL + workspace.name.replaceAll(' ', '-');
+
+            //Builds a description of how many pages were created/updated within the watch window
             var createdDesc = "";
             if (typeof typeSet.created !== 'undefined' && typeSet.created.size > 0) {
                 createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : " page") + " created";
@@ -283,12 +293,9 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
             if (typeof typeSet.updated !== 'undefined' && typeSet.updated.size > 0) {
                 updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : " page") + " updated";
             }
-
             const desc = (createdDesc.length > 0 ? createdDesc + (updatedDesc.length > 0 ? " - " : "") + updatedDesc: updatedDesc)
 
-            // const desc = (typeof typeSet.created !== 'undefined' ? typeSet.created.size : 0) + " " + (typeSet.created.size > 1 || typeSet.created.size < 1 ? "pages" : "page") + " created - "
-            //     + (typeof typeSet.updated !== 'undefined' ? typeSet.updated.size : 0) + " " + (typeSet.updated.size > 1 || typeSet.updated.size < 1 ? "pages" : "page") + " updated";
-
+            //Creating the
             const notif = buildNotification(desc, user.firstName, user.avatarUrl, workspace.name, workspaceURL, fields);
             console.log("Sending: \n" + JSON.stringify(notif))
             notify(notif);
