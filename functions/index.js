@@ -284,14 +284,24 @@ exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes"
             }
 
             const workspaceURL = process.env.TEAM_URL + workspace.name.replaceAll(' ', '-');
+            var createdDesc = "";
+            if (typeof typeSet.created !== 'undefined' && typeSet.created.size > 0) {
+                createdDesc = typeSet.created.size + (typeSet.created.size > 1 ? " pages" : "page") + " created";
+            }
+            var updatedDesc = "";
+            if (typeof typeSet.updated !== 'undefined' && typeSet.created.updated > 0) {
+                updatedDesc = typeSet.updated.size + (typeSet.updated.size > 1 ? " pages" : "page") + " updated";
+            }
 
-            const desc = (typeof typeSet.created !== 'undefined' ? typeSet.created.size : 0) + " " + (typeSet.created.size > 1 || typeSet.created.size < 1 ? "pages" : "page") + " created - "
-                + (typeof typeSet.updated !== 'undefined' ? typeSet.updated.size : 0) + " " + (typeSet.updated.size > 1 || typeSet.updated.size < 1 ? "pages" : "page") + " updated";
+            const desc = (createdDesc.length > 0 ? createdDesc + (updatedDesc.length > 0 ? " - " : "") + updatedDesc: updatedDesc)
+
+            // const desc = (typeof typeSet.created !== 'undefined' ? typeSet.created.size : 0) + " " + (typeSet.created.size > 1 || typeSet.created.size < 1 ? "pages" : "page") + " created - "
+            //     + (typeof typeSet.updated !== 'undefined' ? typeSet.updated.size : 0) + " " + (typeSet.updated.size > 1 || typeSet.updated.size < 1 ? "pages" : "page") + " updated";
 
             const notif = buildNotification(desc, user.firstName, user.avatarUrl, workspace.name, workspaceURL, fields);
-            console.log("Sending: " + JSON.stringify(notif))
+            console.log("Sending: \n" + JSON.stringify(notif))
             notify(notif);
-            console.log("Notification sent")
+            console.log("Notification sent");
         }
     } else {
         console.log("No updates to notify");
