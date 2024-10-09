@@ -4,7 +4,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 var discovered_items = new Map();
-const watch_window = 45;
+const watch_window = 180;
 
 //Subtracks the input from the current time to get how long ago something occurred in minutes
 function minutesAgo(input) {
@@ -152,7 +152,7 @@ function notify(body) {
         })
 }
 
-exports.watcher = functions.pubsub.schedule("every " + watch_window + " minutes").onRun(async () => {
+exports.watcher = functions.pubsub.schedule("0 */3 * * *").onRun(async () => {
     //Will return the first ID that it finds, this works for now
     const workspace = await fetchWorkspace();
 
